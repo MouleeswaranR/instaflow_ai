@@ -41,7 +41,7 @@ export function PostPreview() {
               >
                 {store.images.find(img => img.id === store.selectedImageId) ? (
                   <img 
-                    src={store.images.find(img => img.id === store.selectedImageId)?.cloudinaryUrl} 
+                    src={store.images.find(img => img.id === store.selectedImageId)?.url} 
                     alt="Preview" 
                     className="absolute inset-0 w-full h-full object-cover"
                   />

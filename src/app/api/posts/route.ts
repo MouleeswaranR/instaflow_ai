@@ -72,14 +72,14 @@ export async function POST(req: NextRequest) {
           })),
         },
         generatedImages: {
-          create: (images || []).map((img: any) => ({
-            cloudinaryUrl: img.cloudinaryUrl,
-            publicId: img.publicId,
+          create: (images || []).map((img: { url?: string; cloudinaryUrl?: string; publicId: string; template?: string; theme?: string; width?: number; height?: number; id: string; isSelected?: boolean }) => ({
+            cloudinaryUrl: img.url || img.cloudinaryUrl || "",
+            publicId: img.publicId || "",
             template: img.template || "custom",
             theme: img.theme || "custom",
             width: img.width || 1080,
             height: img.height || 1080,
-            isSelected: img.id === selectedImageId || img.isSelected,
+            isSelected: img.id === selectedImageId || img.isSelected || false,
           })),
         },
       },

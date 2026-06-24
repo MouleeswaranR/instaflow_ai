@@ -11,7 +11,8 @@ export async function generateText(prompt: string): Promise<string> {
       contents: prompt,
     });
     return response.text ?? "";
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as any;
     if ((error?.status === 503 || error?.status === 429 || error?.status === 404) && groq) {
       console.warn("Gemini unavailable, falling back to Groq for text...");
       const completion = await groq.chat.completions.create({
@@ -79,12 +80,14 @@ export async function generateJSON<T>(prompt: string): Promise<T> {
   let text = "{}";
   try {
     text = await tryGenerate("gemini-2.5-flash");
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as any;
     if (error?.status === 503 || error?.status === 429 || error?.status === 404) {
       console.warn("gemini-2.5-flash unavailable, falling back to gemini-2.0-flash...");
       try {
         text = await tryGenerate("gemini-2.0-flash");
-      } catch (err2: any) {
+      } catch (err: unknown) {
+        const err2 = err as any;
         if (err2?.status === 503 || err2?.status === 429 || err2?.status === 404) {
            console.warn("gemini-2.0-flash unavailable, falling back to Groq...");
            text = await tryGenerateGroq();

@@ -147,7 +147,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Desktop sidebar */}
         <aside
           className={cn(
-            "hidden lg:flex flex-col border-r bg-card h-screen sticky top-0 transition-all duration-300 self-start",
+            "hidden lg:flex flex-col border-r bg-card h-screen fixed top-0 left-0 z-40 transition-all duration-300",
             collapsed ? "w-[72px]" : "w-[260px]"
           )}
         >
@@ -155,8 +155,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 min-h-screen">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        <main className={cn(
+          "flex-1 min-h-screen transition-all duration-300",
+          collapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"
+        )}>
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto h-full">
             {children}
           </div>
         </main>

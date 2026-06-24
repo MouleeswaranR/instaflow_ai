@@ -180,7 +180,7 @@ export function ContentInputPanel() {
                       const newImage = {
                         id: `uploaded-${Date.now()}`,
                         postId: "",
-                        cloudinaryUrl: data.url,
+                        url: data.url,
                         publicId: data.publicId,
                         template: files.length > 1 ? "collage" : "custom",
                         theme: "custom",
@@ -190,7 +190,6 @@ export function ContentInputPanel() {
                         createdAt: new Date(),
                       };
                       
-                      // @ts-ignore
                       const { setImages, setSelectedImageId } = useCreatePostStore.getState();
                       setImages([newImage]);
                       setSelectedImageId(newImage.id);
@@ -220,7 +219,7 @@ export function ContentInputPanel() {
               <div className="relative aspect-square bg-gradient-to-br from-primary/20 via-chart-4/10 to-chart-5/20 flex items-center justify-center p-6 overflow-hidden">
                 {images.find(img => img.id === selectedImageId) ? (
                   <img 
-                    src={images.find(img => img.id === selectedImageId)?.cloudinaryUrl} 
+                    src={images.find(img => img.id === selectedImageId)?.url} 
                     alt="Preview" 
                     className="absolute inset-0 w-full h-full object-cover"
                   />

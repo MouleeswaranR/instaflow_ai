@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,17 +46,18 @@ export default function PostsPage() {
     fetchPosts();
   }, []);
 
-  const fetchPosts = async () => {
+  async function fetchPosts() {
     try {
       const res = await fetch("/api/posts");
       const data = await res.json();
       setPosts(data.posts || []);
-    } catch {
-      console.error("Failed to fetch posts");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load posts");
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   const filtered = posts.filter(
     (p) =>

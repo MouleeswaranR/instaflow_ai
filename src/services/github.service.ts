@@ -150,7 +150,6 @@ export async function calculateGitHubStreak(
 
   // Calculate streak
   let currentStreak = 0;
-  let currentDate = new Date();
   
   // Also check yesterday to allow the streak to be active if they haven't committed today yet
   let checkDate = new Date();
@@ -159,7 +158,7 @@ export async function calculateGitHubStreak(
   checkDate.setDate(checkDate.getDate() - 1);
   const yesterdayStr = checkDate.toISOString().split("T")[0];
 
-  let streakActive = pushDates.has(todayStr) || pushDates.has(yesterdayStr);
+  const streakActive = pushDates.has(todayStr) || pushDates.has(yesterdayStr);
   
   if (!streakActive) {
     return 0;

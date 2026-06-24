@@ -119,7 +119,7 @@ Only include suggestions and actions when relevant. The message is always requir
         metadata: {
           suggestions: response.suggestions,
           actions: response.actions,
-        },
+        } as any,
       },
     ],
   });

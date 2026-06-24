@@ -74,7 +74,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(
       new URL("/integrations?success=instagram", req.nextUrl.origin)
     );
-  } catch (error: any) {
+  } catch (err: unknown) {
+    const error = err as any;
     console.error("Instagram callback error:", error);
     return NextResponse.redirect(
       new URL(`/integrations?error=${encodeURIComponent(error.message || "instagram_failed")}`, req.nextUrl.origin)
