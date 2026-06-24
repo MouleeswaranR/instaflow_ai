@@ -34,14 +34,14 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const redirectUri = absoluteUrl("/api/integrations/instagram/callback");
+    const redirectUri = `${req.nextUrl.origin}/api/integrations/instagram/callback`;
     const authUrl = getInstagramAuthUrl(redirectUri);
 
     return NextResponse.json({ authUrl });

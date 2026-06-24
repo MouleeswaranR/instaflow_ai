@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const redirectUri = absoluteUrl("/api/integrations/instagram/callback");
+    const redirectUri = `${req.nextUrl.origin}/api/integrations/instagram/callback`;
 
     // Exchange code for short-lived token
     const tokenData = await exchangeCodeForToken(code, redirectUri);
