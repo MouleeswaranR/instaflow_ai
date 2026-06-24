@@ -1,4 +1,4 @@
-import { generateJSON } from "@/lib/gemini";
+import { generateGroqJSON } from "@/lib/gemini";
 import { prisma } from "@/lib/prisma";
 
 interface AgentInput {
@@ -93,7 +93,7 @@ Respond as JSON:
 
 Only include suggestions and actions when relevant. The message is always required.`;
 
-  const response = await generateJSON<AgentResponse>(prompt);
+  const response = await generateGroqJSON<AgentResponse>(prompt, "llama-3.3-70b-versatile");
 
   // Save conversation
   let conversationId = input.conversationId;

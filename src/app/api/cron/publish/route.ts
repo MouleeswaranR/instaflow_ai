@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { publishScheduledPosts } from "@/services/instagram.service";
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     // Verify cron secret
     const authHeader = req.headers.get("authorization");

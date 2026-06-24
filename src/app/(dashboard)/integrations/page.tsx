@@ -21,6 +21,7 @@ export default function IntegrationsPage() {
   const [isConnectedInstagram, setIsConnectedInstagram] = useState(false);
   const [instagramAccountId, setInstagramAccountId] = useState<string | null>(null);
   const [autoPostLc, setAutoPostLc] = useState(false);
+  const [postOnStreakLc, setPostOnStreakLc] = useState(false);
   const [autoPostGh, setAutoPostGh] = useState(false);
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export default function IntegrationsPage() {
             setLeetcodeUsername(data.integration.username);
             setIsConnectedLeetcode(true);
             setAutoPostLc(data.integration.autoPost);
+            setPostOnStreakLc(data.integration.postOnStreak);
           }
         }
 
@@ -75,6 +77,24 @@ export default function IntegrationsPage() {
       }
     } catch (e) {
       setAutoPostLc(!checked);
+      toast.error("Failed to update preferences");
+    }
+  };
+
+  const handleToggleLcPostOnStreak = async (checked: boolean) => {
+    setPostOnStreakLc(checked);
+    try {
+      const res = await fetch("/api/integrations/leetcode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postOnStreak: checked }),
+      });
+      if (!res.ok) {
+        setPostOnStreakLc(!checked);
+        toast.error("Failed to update preferences");
+      }
+    } catch (e) {
+      setPostOnStreakLc(!checked);
       toast.error("Failed to update preferences");
     }
   };
@@ -324,7 +344,7 @@ export default function IntegrationsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <Label htmlFor="auto-post-streak" className="text-sm">Post on streak milestones</Label>
-                <Switch id="auto-post-streak" />
+                <Switch id="auto-post-streak" checked={postOnStreakLc} onCheckedChange={handleToggleLcPostOnStreak} disabled={!isConnectedLeetcode} />
               </div>
             </div>
           </CardContent>

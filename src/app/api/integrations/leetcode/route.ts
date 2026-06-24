@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { username, autoPost } = body;
+    const { username, autoPost, postOnStreak } = body;
 
     if (username) {
       // Fetch profile to validate username if provided
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
           streak: profile.streak,
           lastSyncAt: new Date(),
           autoPost: autoPost ?? false,
+          postOnStreak: postOnStreak ?? false,
         },
         update: {
           username: profile.username,
@@ -58,18 +59,23 @@ export async function POST(req: NextRequest) {
           streak: profile.streak,
           lastSyncAt: new Date(),
           ...(autoPost !== undefined && { autoPost }),
+          ...(postOnStreak !== undefined && { postOnStreak }),
         },
       });
       return NextResponse.json({ integration });
-    } else if (autoPost !== undefined) {
-      // Just update autoPost if username is not provided
+    } else if (autoPost !== undefined || postOnStreak !== undefined) {
+      // Just update preferences if username is not provided
+      const dataToUpdate: any = {};
+      if (autoPost !== undefined) dataToUpdate.autoPost = autoPost;
+      if (postOnStreak !== undefined) dataToUpdate.postOnStreak = postOnStreak;
+      
       const integration = await prisma.leetCodeIntegration.update({
         where: { userId: session.user.id },
-        data: { autoPost },
+        data: dataToUpdate,
       });
       return NextResponse.json({ integration });
     } else {
-      return NextResponse.json({ error: "Username or autoPost required" }, { status: 400 });
+      return NextResponse.json({ error: "Username or preferences required" }, { status: 400 });
     }
   } catch (error) {
     console.error("LeetCode integration error:", error);

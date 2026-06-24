@@ -28,6 +28,7 @@ export function GeneratePanel() {
       generateCaptions(),
       generateHashtags(),
       generateMusic(),
+      generateImage(),
     ]);
   };
 
@@ -106,6 +107,41 @@ export function GeneratePanel() {
     }
   };
 
+  const [customInstruction, setCustomInstruction] = useState("");
+
+  const generateImage = async (instruction?: string) => {
+    store.setLoading("Images", true);
+    
+    const selectedCaption = store.captions.find(c => c.type === store.selectedCaptionType)?.content;
+    const selectedHashtags = store.hashtags.find(h => h.type === store.selectedHashtagType)?.hashtags.join(" ");
+
+    try {
+      const res = await fetch("/api/generate/image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: store.title,
+          description: store.description,
+          category: store.category,
+          theme: store.theme,
+          customInstruction: instruction || customInstruction,
+          caption: selectedCaption,
+          hashtags: selectedHashtags,
+        }),
+      });
+      const data = await res.json();
+      if (data.image) {
+        store.setImages([data.image]);
+        store.setSelectedImageId(data.image.id);
+        toast.success("Image generated!");
+      }
+    } catch {
+      toast.error("Failed to generate image");
+    } finally {
+      store.setLoading("Images", false);
+    }
+  };
+
   const generateCarousel = async () => {
     store.setLoading("Carousel", true);
     try {
@@ -141,6 +177,7 @@ export function GeneratePanel() {
   const isAnyLoading =
     store.isGeneratingCaptions ||
     store.isGeneratingHashtags ||
+    store.isGeneratingImages ||
     store.isGeneratingMusic;
 
   return (
@@ -173,7 +210,7 @@ export function GeneratePanel() {
       </Card>
 
       <Tabs defaultValue="captions" className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full max-w-lg">
+        <TabsList className="grid grid-cols-5 w-full max-w-2xl">
           <TabsTrigger value="captions" className="gap-1.5">
             <Sparkles className="h-3.5 w-3.5" /> Captions
           </TabsTrigger>
@@ -185,6 +222,9 @@ export function GeneratePanel() {
           </TabsTrigger>
           <TabsTrigger value="music" className="gap-1.5">
             <Music className="h-3.5 w-3.5" /> Music
+          </TabsTrigger>
+          <TabsTrigger value="image" className="gap-1.5">
+            <Image className="h-3.5 w-3.5" /> Image
           </TabsTrigger>
         </TabsList>
 
@@ -342,6 +382,13 @@ export function GeneratePanel() {
 
         {/* Music Tab */}
         <TabsContent value="music" className="space-y-4">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-md p-3 mb-4 flex items-start gap-3">
+            <span className="text-amber-500 text-lg">⚠️</span>
+            <div className="text-sm text-amber-500/90 leading-snug">
+              <span className="font-semibold block mb-1">Instagram API Limitation</span>
+              The official Instagram API does not allow auto-publishing music with image posts. These recommendations are saved for your reference if you decide to post manually through the app.
+            </div>
+          </div>
           {store.musicRecommendations.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center py-12 text-center">
@@ -380,6 +427,57 @@ export function GeneratePanel() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          )}
+        </TabsContent>
+        {/* Image Tab */}
+        <TabsContent value="image" className="space-y-4">
+          {store.images.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center py-12 text-center">
+                <Image className="h-10 w-10 text-muted-foreground mb-3" />
+                <p className="text-sm text-muted-foreground mb-4">Generate an AI image for your post</p>
+                <Button onClick={() => generateImage()} disabled={store.isGeneratingImages} variant="outline" className="gap-2">
+                  {store.isGeneratingImages ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
+                  Generate Image
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              <Card>
+                <CardContent className="p-5 flex flex-col sm:flex-row gap-6">
+                  <div className="shrink-0">
+                    <img 
+                      src={store.images.find(img => img.id === store.selectedImageId)?.url} 
+                      alt="Generated" 
+                      className="w-48 h-48 object-cover rounded-xl border shadow-sm"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-sm mb-1">AI Image Edit</h4>
+                      <p className="text-xs text-muted-foreground">Not quite right? Refine the image by telling the AI what to change or add.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. Make it minimalist with a blue tone"
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        value={customInstruction}
+                        onChange={(e) => setCustomInstruction(e.target.value)}
+                      />
+                      <Button onClick={() => generateImage(customInstruction)} disabled={store.isGeneratingImages || !customInstruction.trim()} size="sm" className="gap-2 whitespace-nowrap">
+                        {store.isGeneratingImages ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        Regenerate
+                      </Button>
+                    </div>
+                    <Button onClick={() => generateImage("")} disabled={store.isGeneratingImages} variant="outline" size="sm" className="w-full gap-2 mt-4">
+                      <RefreshCw className="h-4 w-4" /> Regenerate Completely
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </TabsContent>
