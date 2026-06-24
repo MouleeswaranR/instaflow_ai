@@ -72,6 +72,7 @@ export async function GET(req: NextRequest) {
         // Find published posts with instagramPostId
         const publishedPosts = await prisma.post.findMany({
           where: { userId, instagramPostId: { not: null } },
+          include: { generatedImages: true }
         });
 
         const insightsPromises = publishedPosts.map(post => 
@@ -80,16 +81,33 @@ export async function GET(req: NextRequest) {
         
         const allInsights = await Promise.allSettled(insightsPromises);
         
-        allInsights.forEach(result => {
+        const postsPerformance = publishedPosts.map((post, i) => {
+          const result = allInsights[i];
           if (result.status === "fulfilled" && result.value) {
-            liveStats.likes += result.value.likes || 0;
-            liveStats.comments += result.value.comments || 0;
-            liveStats.reach += result.value.reach || 0;
-            liveStats.impressions += result.value.impressions || 0;
-            liveStats.saves += result.value.saved || 0;
-            liveStats.shares += result.value.shares || 0;
+            const val = result.value;
+            const engagement = (val.likes || 0) + (val.comments || 0) + (val.saved || 0) + (val.shares || 0);
+            
+            liveStats.likes += val.likes || 0;
+            liveStats.comments += val.comments || 0;
+            liveStats.reach += val.reach || 0;
+            liveStats.impressions += val.impressions || 0;
+            liveStats.saves += val.saved || 0;
+            liveStats.shares += val.shares || 0;
+
+            return {
+              id: post.id,
+              caption: post.description ? post.description.substring(0, 30) + '...' : post.title || 'Instagram Post',
+              type: post.generatedImages?.length > 1 ? 'Carousel' : 'Static',
+              publishedAt: post.publishedAt || post.createdAt,
+              reach: val.reach || 0,
+              impressions: val.impressions || 0,
+              engagement: engagement,
+              likes: val.likes || 0,
+              comments: val.comments || 0,
+            };
           }
-        });
+          return null;
+        }).filter(Boolean);
         
         // Update today's snapshot
         const todayStr = new Date().toISOString().split("T")[0];
@@ -104,6 +122,9 @@ export async function GET(req: NextRequest) {
             ...liveStats
           }
         }).catch(err => console.error("Could not upsert live stats snapshot:", err));
+        
+        // Attach to the module scope temporarily so we can pass it down
+        (globalThis as any).__tempPostsPerformance = postsPerformance;
         
       } catch (err) {
         console.error("Failed to fetch live Instagram insights:", err instanceof Error ? err.message : String(err));
@@ -150,7 +171,11 @@ export async function GET(req: NextRequest) {
         shares: s.shares,
       })),
       liveStats, // pass the live aggregated stats directly
+      postsPerformance: (globalThis as any).__tempPostsPerformance || [],
     };
+
+    // Clean up temporary variable
+    delete (globalThis as any).__tempPostsPerformance;
 
     return NextResponse.json(analyticsData);
   } catch (error) {

@@ -30,7 +30,10 @@ import {
   Pie,
   Cell,
   Legend,
-  ComposedChart
+  ComposedChart,
+  ScatterChart,
+  Scatter,
+  ZAxis
 } from "recharts";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -370,63 +373,232 @@ export default function AnalyticsPage() {
 
       </div>
 
-      {/* Engagement Composed Chart */}
+      {/* Scatter & Content Type Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Engagement Composed Chart (Span 2) */}
+        <Card className="lg:col-span-2 border-border/50 bg-background/40 backdrop-blur-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-background/50 pb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-rose-500/10">
+                <Heart className="h-5 w-5 text-rose-500" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-bold">Engagement Breakdown</CardTitle>
+                <CardDescription>Daily interactions on your posts</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                  <XAxis 
+                    dataKey="date" 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickMargin={12}
+                    stroke="hsl(var(--muted-foreground))" 
+                  />
+                  <YAxis 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickMargin={12}
+                    stroke="hsl(var(--muted-foreground))"
+                  />
+                  <RechartsTooltip content={<CustomTooltip />} />
+                  <Legend 
+                    verticalAlign="top" 
+                    height={50}
+                    iconType="circle"
+                    wrapperStyle={{ paddingTop: "10px" }}
+                  />
+                  
+                  <Bar dataKey="likes" name="Likes" stackId="a" fill="#f43f5e" radius={[0, 0, 4, 4]} />
+                  <Bar dataKey="comments" name="Comments" stackId="a" fill="#10b981" />
+                  <Bar dataKey="saves" name="Saves" stackId="a" fill="#f59e0b" />
+                  <Bar dataKey="shares" name="Shares" stackId="a" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                  
+                  <Line 
+                    type="monotone" 
+                    dataKey="reach" 
+                    name="Total Reach"
+                    stroke="#3b82f6" 
+                    strokeWidth={3} 
+                    dot={{ r: 4, fill: "#3b82f6", strokeWidth: 0 }}
+                    activeDot={{ r: 6, fill: "#3b82f6", stroke: "var(--background)", strokeWidth: 2 }}
+                  />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Content Type Chart (Span 1) */}
+        <Card className="border-border/50 bg-background/40 backdrop-blur-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-background/50 pb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-indigo-500/10">
+                <BarChart3 className="h-5 w-5 text-indigo-500" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-bold">Content Types</CardTitle>
+                <CardDescription>Avg Reach by format</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="h-[400px] w-full">
+              {data?.postsPerformance && data.postsPerformance.length > 0 ? (() => {
+                const grouped = data.postsPerformance.reduce((acc: any, post: any) => {
+                  acc[post.type] = acc[post.type] || { reach: 0, count: 0 };
+                  acc[post.type].reach += post.reach;
+                  acc[post.type].count += 1;
+                  return acc;
+                }, {});
+                const typeData = Object.keys(grouped).map(type => ({
+                  type,
+                  avgReach: Math.round(grouped[type].reach / grouped[type].count)
+                }));
+                return (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={typeData} margin={{ top: 20, right: 0, bottom: 20, left: -20 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                      <XAxis dataKey="type" fontSize={12} tickLine={false} axisLine={false} tickMargin={12} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis fontSize={12} tickLine={false} axisLine={false} tickMargin={12} stroke="hsl(var(--muted-foreground))" />
+                      <RechartsTooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                      <Bar dataKey="avgReach" name="Avg Reach" fill="#8b5cf6" radius={[4, 4, 0, 0]}>
+                        {typeData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.type === 'Carousel' ? '#f59e0b' : '#3b82f6'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                );
+              })() : (
+                <div className="h-full w-full flex items-center justify-center text-muted-foreground text-sm">No post data available</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+      </div>
+
+      {/* Scatter Plot */}
+      {data?.postsPerformance && data.postsPerformance.length > 0 && (
+        <Card className="border-border/50 bg-background/40 backdrop-blur-xl overflow-hidden">
+          <CardHeader className="border-b border-border/50 bg-background/50 pb-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <TrendingUp className="h-5 w-5 text-emerald-500" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-bold">Reach vs Engagement</CardTitle>
+                <CardDescription>Scatter plot of recent posts (size = impressions)</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                  <XAxis 
+                    type="number" 
+                    dataKey="reach" 
+                    name="Reach" 
+                    fontSize={12} tickLine={false} axisLine={false} tickMargin={12} stroke="hsl(var(--muted-foreground))"
+                  />
+                  <YAxis 
+                    type="number" 
+                    dataKey="engagement" 
+                    name="Engagement" 
+                    fontSize={12} tickLine={false} axisLine={false} tickMargin={12} stroke="hsl(var(--muted-foreground))"
+                  />
+                  <ZAxis 
+                    type="number" 
+                    dataKey="impressions" 
+                    range={[60, 400]} 
+                    name="Impressions" 
+                  />
+                  <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }: any) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-background/80 backdrop-blur-xl border border-border p-4 rounded-xl shadow-xl flex flex-col gap-2 max-w-[200px]">
+                          <p className="text-sm font-semibold text-foreground border-b border-border/50 pb-2 mb-1 truncate">{data.caption}</p>
+                          <p className="text-xs text-muted-foreground">Reach: <span className="font-bold text-foreground">{data.reach}</span></p>
+                          <p className="text-xs text-muted-foreground">Engagement: <span className="font-bold text-foreground">{data.engagement}</span></p>
+                          <p className="text-xs text-muted-foreground">Impressions: <span className="font-bold text-foreground">{data.impressions}</span></p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }} />
+                  <Scatter name="Posts" data={data.postsPerformance} fill="#10b981" opacity={0.7} />
+                </ScatterChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Unified Timeline */}
       <Card className="border-border/50 bg-background/40 backdrop-blur-xl overflow-hidden">
         <CardHeader className="border-b border-border/50 bg-background/50 pb-4">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-rose-500/10">
-              <Heart className="h-5 w-5 text-rose-500" />
+            <div className="p-2 rounded-lg bg-purple-500/10">
+              <Code2 className="h-5 w-5 text-purple-500" />
             </div>
             <div>
-              <CardTitle className="text-xl font-bold">Engagement Breakdown</CardTitle>
-              <CardDescription>Daily interactions on your posts</CardDescription>
+              <CardTitle className="text-xl font-bold">Activity Timeline</CardTitle>
+              <CardDescription>Recent cross-platform milestones</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
-                <XAxis 
-                  dataKey="date" 
-                  fontSize={12} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  tickMargin={12}
-                  stroke="hsl(var(--muted-foreground))" 
-                />
-                <YAxis 
-                  fontSize={12} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  tickMargin={12}
-                  stroke="hsl(var(--muted-foreground))"
-                />
-                <RechartsTooltip content={<CustomTooltip />} />
-                <Legend 
-                  verticalAlign="top" 
-                  height={50}
-                  iconType="circle"
-                  wrapperStyle={{ paddingTop: "10px" }}
-                />
-                
-                <Bar dataKey="likes" name="Likes" stackId="a" fill="#f43f5e" radius={[0, 0, 4, 4]} />
-                <Bar dataKey="comments" name="Comments" stackId="a" fill="#10b981" />
-                <Bar dataKey="saves" name="Saves" stackId="a" fill="#f59e0b" />
-                <Bar dataKey="shares" name="Shares" stackId="a" fill="#06b6d4" radius={[4, 4, 0, 0]} />
-                
-                <Line 
-                  type="monotone" 
-                  dataKey="reach" 
-                  name="Total Reach"
-                  stroke="#3b82f6" 
-                  strokeWidth={3} 
-                  dot={{ r: 4, fill: "#3b82f6", strokeWidth: 0 }}
-                  activeDot={{ r: 6, fill: "#3b82f6", stroke: "var(--background)", strokeWidth: 2 }}
-                />
-              </ComposedChart>
-            </ResponsiveContainer>
+          <div className="space-y-6">
+            {data?.postsPerformance?.slice(0, 3).map((post: any) => (
+              <div key={post.id} className="flex gap-4 relative">
+                <div className="flex flex-col items-center">
+                  <div className="h-3 w-3 rounded-full bg-rose-500 ring-4 ring-rose-500/20" />
+                  <div className="w-px h-full bg-border mt-2" />
+                </div>
+                <div className="pb-6">
+                  <p className="text-sm font-medium text-foreground">Instagram Post Published</p>
+                  <p className="text-xs text-muted-foreground mt-1">"{post.caption}" achieved {post.reach} reach</p>
+                </div>
+              </div>
+            ))}
+            {data?.leetcode?.lastSync && (
+              <div className="flex gap-4 relative">
+                <div className="flex flex-col items-center">
+                  <div className="h-3 w-3 rounded-full bg-amber-500 ring-4 ring-amber-500/20" />
+                  <div className="w-px h-full bg-border mt-2" />
+                </div>
+                <div className="pb-6">
+                  <p className="text-sm font-medium text-foreground">LeetCode Streak Extended</p>
+                  <p className="text-xs text-muted-foreground mt-1">Maintained a {data.leetcode.streak} day solving streak</p>
+                </div>
+              </div>
+            )}
+            {data?.github?.lastSync && (
+              <div className="flex gap-4 relative">
+                <div className="flex flex-col items-center">
+                  <div className="h-3 w-3 rounded-full bg-blue-500 ring-4 ring-blue-500/20" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">GitHub Streak Synced</p>
+                  <p className="text-xs text-muted-foreground mt-1">Maintained a {data.github.streak} day commit streak</p>
+                </div>
+              </div>
+            )}
+            {(!data?.postsPerformance?.length && !data?.leetcode && !data?.github) && (
+              <div className="text-center text-sm text-muted-foreground py-4">No recent activity to show.</div>
+            )}
           </div>
         </CardContent>
       </Card>

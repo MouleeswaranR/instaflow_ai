@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
         username: profile.username,
         accessToken: longLivedToken.access_token,
         tokenExpiresAt: new Date(
-          Date.now() + longLivedToken.expires_in * 1000
+          Date.now() + (longLivedToken.expires_in || 5184000) * 1000
         ),
         profilePictureUrl: profile.profile_picture_url,
         followersCount: profile.followers_count,
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
       update: {
         accessToken: longLivedToken.access_token,
         tokenExpiresAt: new Date(
-          Date.now() + longLivedToken.expires_in * 1000
+          Date.now() + (longLivedToken.expires_in || 5184000) * 1000
         ),
         profilePictureUrl: profile.profile_picture_url,
         followersCount: profile.followers_count,
